@@ -602,8 +602,12 @@ processAllBtn.addEventListener('click', async () => {
   const pendings = queue.filter(q => q.status === 'pending' || q.status === 'failed');
   if (pendings.length === 0) return;
   
-  // Process all in parallel
-  await Promise.all(pendings.map(item => handleProcess(item.id)));
+  // Process sequentially to avoid API concurrency and rate-limit issues
+  for (const item of pendings) {
+    await handleProcess(item.id);
+    // Wait 600ms between requests to give the API rate/concurrency limits breathing room
+    await new Promise(resolve => setTimeout(resolve, 600));
+  }
 });
 
 // --- GOOGLE GEMINI CLIENT-SIDE OCR ENGINE ---
